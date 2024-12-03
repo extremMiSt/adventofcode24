@@ -1,16 +1,17 @@
+{-# OPTIONS_GHC -Wno-type-defaults #-}
 module Main where
 
-records :: String -> [[Integer]]
+records :: Read b => String -> [[b]]
 records l = map (map read.words) $ lines l
 
-diff :: [Integer] -> [Integer]
+diff :: Num c => [c] -> [c]
 diff (x:xs) = zipWith (-) (x:xs) xs
 diff [] = [];
 
-count :: [Bool] -> Integer
+count :: Num b => [Bool] -> b
 count xs = fromIntegral $ length (filter id xs)
 
-isSafe :: [Integer] -> Bool
+isSafe :: (Foldable t, Ord a, Num a) => t a -> Bool
 isSafe r = (all (< 0) r || all (> 0) r) && all (\x -> abs x <= 3) r
 
 vars :: [a] -> [[a]]
@@ -19,15 +20,14 @@ vars l = impl l []
         impl (x:xs) p = (p++xs) : impl xs (p++[x])
         impl [] p = [p]
 
-task1 :: [[Integer]] -> Integer
+task1 :: (Foldable t, Ord a, Num b, Num a) => [t a] -> b
 task1 l = count $ map isSafe l
 
-isVarSafe :: [Integer] -> Bool
+isVarSafe :: (Ord a, Num a) => [a] -> Bool
 isVarSafe v = any (isSafe . diff) (vars v)
 
-task2 :: [[Integer]] -> Integer
+task2 :: (Ord a, Num b, Num a) => [[a]] -> b
 task2 l = count $ map isVarSafe l
-
 
 main :: IO ()
 main = do
