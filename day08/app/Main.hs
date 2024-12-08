@@ -16,25 +16,25 @@ parse file = dewit file 0 0
         dewit ([]:y) _ yp = dewit y 0 (yp+1) 
         dewit [] _ _ = []
 
+inBounds :: (Integer, Integer) -> Bool
+inBounds (x,y) = x>=0 && y>= 0 && x<s && y<s
 
 antinodePair :: (a1, Integer, Integer)-> (a2, Integer, Integer) -> Set (Integer, Integer)
-antinodePair (_,x1,y1) (_,x2,y2) = Set.fromList $ filter (\(x,y) -> x>=0 && y>= 0 && x<s && y<s) [(x1-diffX,y1-diffY), (x2+diffX,y2+diffY)]
+antinodePair (_,x1,y1) (_,x2,y2) = Set.fromList $ filter inBounds [(x1-diffX,y1-diffY), (x2+diffX,y2+diffY)]
     where
         diffX = x2-x1
         diffY = y2-y1
 
 antinodeLine :: (a1, Integer, Integer)-> (a2, Integer, Integer) -> Set (Integer, Integer)
 antinodeLine (_,x1,y1) (_,x2,y2) = Set.fromList $ 
-                        takeWhile (\(x,y) -> x>=0 && y>= 0 && x<s && y<s) (rep (x2,y2) (-diffX,-diffY)) ++ 
-                        takeWhile (\(x,y) -> x>=0 && y>= 0 && x<s && y<s) (rep (x2,y2) (diffX,diffY))
+                        takeWhile inBounds (rep (x2,y2) (-diffX,-diffY)) ++ 
+                        takeWhile inBounds (rep (x2,y2) (diffX,diffY))
     where
         diffX = x2-x1
         diffY = y2-y1
 
 rep :: (Num a, Num b) => (a, b) -> (a, b) -> [(a, b)]
-rep (a,b) (dx,dy) = (a,b) : rep next (dx,dy)
-    where
-        next = (a+dx, b+dy)
+rep (a,b) (dx,dy) = (a,b) : rep (a+dx, b+dy) (dx,dy)
 
 antinodes :: [(a2, Integer, Integer)] -> Set (Integer, Integer)
 antinodes (a:r) = unions (map (antinodePair a) r)  `union` antinodes r
