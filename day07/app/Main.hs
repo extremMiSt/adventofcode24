@@ -4,7 +4,7 @@ import Data.List.Split (splitOn)
 records :: [Char] -> (Integer, [Integer])
 records l = (goal, list)
     where 
-        (x:xs) = splitOn ": "  l
+        (x:xs) = splitOn ": " l
         goal = read x
         list = map read $ (words.head) xs
 
