@@ -1,11 +1,13 @@
 module Main where
 import Debug.Trace (trace)
-import Data.Set (Set, empty, insert, delete)
-import qualified Data.Set as Set
+import Data.List (delete, insert, sort)
 
 
 tracing :: Show a => a -> a
 tracing a = trace (show a) a
+
+tracing' :: Show a => String -> a -> a
+tracing' s a = trace (s ++ show a) a
 
 expand :: [Integer] -> [Integer]
 expand line = dewit line True 0
@@ -32,49 +34,62 @@ fragment l = dewit l (reverse l)
                                           | f2 == -1 = dewit ((i1, f1):l1) l2
                                           | f1 /= -1 = f1 : dewit l1 ((i2, f2):l2)
                                           | f1 == -1 = f2 : dewit l1 l2
-
-freeSpace :: (Ord b, Num b) => [b] -> Set (b, b)
-freeSpace l = dewit l True 0
-    where
-        dewit (len:ls) True pos = dewit ls False (pos+len)
-        dewit (len:ls) False pos = (len,pos) `insert` dewit ls True (pos+len)
-        dewit [] _ _ = empty
-
-fileSpace :: (Num t1, Num t2) => [t1] -> [(t1, t1, t2)]
-fileSpace l = dewit l True 0 0
-    where
-        dewit (len:ls) True pos file = (len, pos, file) : dewit ls False (pos+len) (file+1)
-        dewit (len:ls) False pos file = dewit ls True (pos+len) file
-        dewit [] _ _ _ = []
-
+        dewit _ _ = error "this should not happen"
 
 part1 :: [Integer] -> Integer
 part1 l = checksum $ fragment $ zip [0..] $ expand l
 
-
-movesTo :: Set (Integer, Integer) -> (Integer,Integer,Integer)-> (Integer,Integer)
-movesTo free  (len, pos, f) = case minfree of
-                                    Nothing -> (len,pos)
-                                    (Just e@(_,p)) -> if p<pos then e else (len,pos)
+freeSpace :: [Integer] -> [(Integer, Integer)]
+freeSpace l = dewit l True 0
     where
-        minfree = Set.lookupGE (len, 0) free
+        dewit (len:ls) True pos = dewit ls False (pos+len)
+        dewit (len:ls) False pos = (pos, len) : dewit ls True (pos+len)
+        dewit [] _ _ = []
 
-{--moveAll (e@(len, _, f):files) free | diff == 0 = e `insert` (moveAll files (e `delete` free))
+fileSpace :: [Integer] -> [(Integer, Integer, Integer)]
+fileSpace l = dewit l True 0 0
     where
-        (l, p) = movesTo f free
-        diff = l-len
-moveAll [] _ = empty
+        dewit (len:ls) True pos file = (pos, len, file) : dewit ls False (pos+len) (file+1)
+        dewit (len:ls) False pos file = dewit ls True (pos+len) file
+        dewit [] _ _ _ = []
 
-defragment :: [(Integer,Integer)] -> [(Integer,Integer)]
-defragment l = dewit (reverse files) free
+movesTo :: [(Integer, Integer)] -> (Integer,Integer,Integer)-> (Integer,Integer)
+movesTo free (pos, len, _) = case minFree of
+                                (x:_) -> x
+                                [] -> (pos,len)
+    
+    where
+        minFree = filter (\(p,l) -> len <= l && p<pos) free
+
+moveAll :: [(Integer,Integer,Integer)] -> [(Integer,Integer)] -> [(Integer,Integer,Integer)]
+moveAll (file@(_,len,f):files) free | diff == 0 = (p,l,f): moveAll files (delete goal free)
+                                    | otherwise = (p,len,f): moveAll files (insert (p+len, diff) (delete goal free))
     where 
-        files = fileSpace l
-        free = freeSpace l--}
+        goal@(p,l) = movesTo free file
+        diff = l-len
+moveAll [] _ = []
 
+defragment :: [Integer] -> [(Integer,Integer,Integer)]
+defragment l = sort $ moveAll files free
+    where 
+        files = reverse $ fileSpace l
+        free = freeSpace l
+
+expand' :: [(Integer,Integer,Integer)] -> [Integer]
+expand' line = dewit line 0
+    where
+        dewit ((_,0,_):as) n = dewit as n
+        dewit a@((pos,len,file):as) n | n < pos = -1 : dewit a (n+1)
+                                      | otherwise = file : dewit ((pos,len-1,file):as) (n+1)
+        dewit [] _ = []
+
+part2 :: [Integer] -> Integer
+part2 l = checksum $ expand' $ defragment l
 
 main :: IO ()
 main = do
     f <- readFile "./input01.txt"
-    --let line = $ map (\x -> read [x]) "2333133121414131402"
     let line = map (\x -> read [x]) $ head $ lines f
+    --let line = map (\x -> read [x]) "2333133121414131402"
     print $ part1 line
+    print $ part2 line
