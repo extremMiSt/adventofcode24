@@ -59,7 +59,6 @@ part2 area start = sum $ map (rating area) start
 rating :: [[Int]] -> (Int,Int) -> Int
 rating area start = length nines
     where
-
         reachable = reacheableBFS area S.empty (Q.fromList [[start]])
         nines = filter (\((x,y):_) -> area!!y!!x ==9) (F.toList reachable)
 
@@ -68,9 +67,5 @@ main = do
     f <- readFile "./input01.txt"
     let area = map (map (\x -> read [x])) (lines f)
     let start = starts area
+    print $ part1 area start
     print $ part2 area start
-
-
-
-
-    return ()
