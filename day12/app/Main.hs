@@ -54,82 +54,76 @@ partition _ _ [] _ _ _ part = part
 score :: Int -> [[Char]] -> [(Char, S.Set (Int, Int))] -> Integer
 score len area elements = sum $ map (\(_,x) -> fromIntegral (S.size x) * fromIntegral (sum $ map (perimeter len area) (S.toList x))) elements
 
+part1 :: Int -> [[Char]] -> Integer
+part1 len input = score len input (partition len input input 0 0 S.empty [])
+
 sides :: Int -> [[Char]] -> (Int, Int) -> [(Dir, Int,Int)]
 sides len inp (x,y) = north++south++east++west
     where
-        north = [(NORTH,x-1,y) | x-1 < 0 || x-1 >= 0 && inp!!y!!x /= inp!!y!!(x-1)]
-        south = [(SOUTH,x+1,y) | x+1 >= len || inp!!y!!x /= inp!!y!!(x+1)]
-        east = [(EAST,x,y-1) | y-1 < 0 || y-1 >= 0 && inp!!y!!x /= inp!!(y-1)!!x]
-        west = [(WEST,x,y+1) | y+1 >= len || y+1 < len && inp!!y!!x /= inp!!(y+1)!!x]
+        west = [(WEST,x,y) | x-1 < 0 || x-1 >= 0 && inp!!y!!x /= inp!!y!!(x-1)]
+        east = [(EAST,x,y) | x+1 >= len || inp!!y!!x /= inp!!y!!(x+1)]
+        north = [(NORTH,x,y) | y-1 < 0 || y-1 >= 0 && inp!!y!!x /= inp!!(y-1)!!x]
+        south = [(SOUTH,x,y) | y+1 >= len || y+1 < len && inp!!y!!x /= inp!!(y+1)!!x]
 
 allSides :: Int -> [String] -> S.Set (Int,Int) -> [(Dir, Int, Int)]
 allSides len inp elems = concatMap (sides len inp) (S.toList elems)
 
-compressSides :: (Eq b, Eq c, Num b, Num t, Num c) => (Dir, b, c) -> [(Dir, b, c)] -> t
-compressSides (NORTH,x,y) todo@(t:ts) | null ts = 0
-                             | (NORTH,x+1,y) `elem` todo = compressSides (NORTH,x+1,y) ((NORTH,x+1,y) `delete` todo)
+compressSides :: (Dir, Int, Int) -> [(Dir, Int, Int)] -> Int
+compressSides (NORTH,x,y) todo@(_:_)
                              | (NORTH,x-1,y) `elem` todo = compressSides (NORTH,x-1,y) ((NORTH,x-1,y) `delete` todo)
                              | (WEST,x,y) `elem` todo = 1+ compressSides (WEST,x,y) ((WEST,x,y) `delete` todo)
-                             | (EAST,x,y) `elem` todo = 1+ compressSides (EAST,x,y) ((EAST,x,y) `delete` todo)
-                             | (WEST,x+1,y-1) `elem` todo = 1+ compressSides (WEST,x+1,y-1) ((WEST,x+1,y-1) `delete` todo)
                              | (EAST,x-1,y-1) `elem` todo = 1+ compressSides (EAST,x-1,y-1) ((EAST,x-1,y-1) `delete` todo)
-                             | otherwise = 1 + compressSides t ts
+                             | otherwise = 1 + compressSides start sides'
+    where
+        start = head $ filter (\(s,xp,yp) -> s==NORTH && (s,xp+1,yp) `notElem` todo) todo
+        sides' = start `delete` todo
 
-compressSides (SOUTH,x,y) todo@(t:ts) | null ts = 0
+compressSides (SOUTH,x,y) todo@(_:_)
                              | (SOUTH,x+1,y) `elem` todo = compressSides (SOUTH,x+1,y) ((SOUTH,x+1,y) `delete` todo)
-                             | (SOUTH,x-1,y) `elem` todo = compressSides (SOUTH,x-1,y) ((SOUTH,x-1,y) `delete` todo)
-                             | (WEST,x,y) `elem` todo = 1+ compressSides (WEST,x,y) ((WEST,x,y) `delete` todo)
                              | (EAST,x,y) `elem` todo = 1+ compressSides (EAST,x,y) ((EAST,x,y) `delete` todo)
                              | (WEST,x+1,y+1) `elem` todo = 1+ compressSides (WEST,x+1,y+1) ((WEST,x+1,y+1) `delete` todo)
-                             | (EAST,x-1,y+1) `elem` todo = 1+ compressSides (EAST,x-1,y+1) ((EAST,x-1,y+1) `delete` todo)
-                             | otherwise = 1 + compressSides t ts
+                             | otherwise = 1 + compressSides start sides'
+    where
+        start = head $ filter (\(s,xp,yp) -> s==NORTH && (s,xp+1,yp) `notElem` todo) todo
+        sides' = start `delete` todo
 
-compressSides (EAST,x,y) todo@(t:ts) | null ts = 0
-                             | (EAST,x,y+1) `elem` todo = compressSides (EAST,x,y+1) ((EAST,x,y+1) `delete` todo)
-                             | (EAST,x,y-1) `elem` todo = compressSides (EAST,x,y-1) ((EAST,x,y) `delete` todo)
+compressSides (EAST,x,y) todo@(_:_) 
+                             | (EAST,x,y-1) `elem` todo = compressSides (EAST,x,y-1) ((EAST,x,y-1) `delete` todo)
                              | (NORTH,x,y) `elem` todo = 1+ compressSides (NORTH,x,y) ((NORTH,x,y) `delete` todo)
-                             | (SOUTH,x,y) `elem` todo = 1+ compressSides (SOUTH,x,y) ((SOUTH,x,y) `delete` todo)
-                             | (NORTH,x+1,y+1) `elem` todo = 1+ compressSides (NORTH,x+1,y+1) ((NORTH,x+1,y+1) `delete` todo)
                              | (SOUTH,x+1,y-1) `elem` todo = 1+ compressSides (SOUTH,x+1,y-1) ((SOUTH,x+1,y-1) `delete` todo)
-                             | otherwise = 1 + compressSides t ts
+                             | otherwise = 1 + compressSides start sides'
+    where
+        start = head $ filter (\(s,xp,yp) -> s==NORTH && (s,xp+1,yp) `notElem` todo) todo
+        sides' = start `delete` todo
 
-compressSides (WEST,x,y) todo@(t:ts) | null ts = 0
-                             | (WEST,x,y+1) `elem` todo = compressSides (WEST,x,y+1) ((WEST,x,y+1) `delete` todo)
-                             | (WEST,x,y-1) `elem` todo = compressSides (WEST,x,y-1) ((WEST,x,y) `delete` todo)
-                             | (NORTH,x,y) `elem` todo = 1+ compressSides (NORTH,x,y) ((NORTH,x,y) `delete` todo)
+compressSides (WEST,x,y) todo@(_:_)
+                             | (WEST,x,y+1) `elem` todo = compressSides (WEST,x,y+1) ( (WEST,x,y+1) `delete` todo)
                              | (SOUTH,x,y) `elem` todo = 1+ compressSides (SOUTH,x,y) ((SOUTH,x,y) `delete` todo)
                              | (NORTH,x-1,y+1) `elem` todo = 1+ compressSides (NORTH,x-1,y+1) ((NORTH,x-1,y+1) `delete` todo)
-                             | (SOUTH,x-1,y-1) `elem` todo = 1+ compressSides (SOUTH,x-1,y-1) ((SOUTH,x-1,y-1) `delete` todo)
-                             | otherwise = 1 + compressSides t ts
+                             | otherwise = 1 + compressSides start sides'
+    where
+        start = head $ filter (\(s,xp,yp) -> s==NORTH && (s,xp+1,yp) `notElem` todo) todo
+        sides' = start `delete` todo
 
 compressSides _ [] = 0
 
 compress :: [(Dir, Int,Int)] -> Int
-compress sides = compressSides start sides'
+compress side = 1+ compressSides start sides'
     where
-        start = head $ filter (\(s,x,y) -> s==NORTH && (s,x-1,y) `notElem` sides) sides
-        sides' = start `delete` sides
+        start = head $ filter (\(s,x,y) -> s==NORTH && (s,x+1,y) `notElem` side) side
+        sides' = start `delete` side
 
-score' :: Int -> [String] -> [(Char, S.Set (Int, Int))] -> [(Char, Int)]
-score' len inp elements = map (\(x,s) -> (x, compress $ allSides len inp s)) elements
+score' :: Int -> [[Char]] -> [(Char, S.Set (Int, Int))] -> Integer
+score' len area elements = sum $ map (\(_,x) -> fromIntegral (S.size x) * fromIntegral (compress $ allSides len area x)) elements
 
-
-{--
-(-1,-1)|(0,-1)|(+1,-1)
-  ----   ----   ----
-(-1,0) |(0, 0)|(+1,0)
-  ----   ----   ----
-(-1,+1)|(0,+1)|(+1,+1)
---}
-
+part2 :: Int -> [[Char]] -> Integer
+part2 len input= score' len input (partition len input input 0 0 S.empty [])
 
 main :: IO ()
 main = do
-    --f <- readFile "./input01.txt"
-    f <- readFile "./test02.txt"
+    f <- readFile "./input01.txt"
+    --f <- readFile "./test02.txt"
     let input = lines f
     let len = length $ head input
-    print $ score len input (partition len input input 0 0 S.empty [])
-    print $ score' len input (partition len input input 0 0 S.empty [])
-
-    return ()
+    print $ part1 len input
+    print $ part2 len input
