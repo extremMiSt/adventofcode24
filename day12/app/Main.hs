@@ -69,7 +69,9 @@ allSides :: Int -> [String] -> S.Set (Int,Int) -> [(Dir, Int, Int)]
 allSides len inp elems = concatMap (sides len inp) (S.toList elems)
 
 compressSides :: (Dir, Int, Int) -> [(Dir, Int, Int)] -> Int
-compressSides (NORTH,x,y) todo@(_:_)
+compressSides _ [] = 0
+
+compressSides (NORTH,x,y) todo
                              | (NORTH,x-1,y) `elem` todo = compressSides (NORTH,x-1,y) ((NORTH,x-1,y) `delete` todo)
                              | (WEST,x,y) `elem` todo = 1+ compressSides (WEST,x,y) ((WEST,x,y) `delete` todo)
                              | (EAST,x-1,y-1) `elem` todo = 1+ compressSides (EAST,x-1,y-1) ((EAST,x-1,y-1) `delete` todo)
@@ -78,7 +80,7 @@ compressSides (NORTH,x,y) todo@(_:_)
         start = head $ filter (\(s,xp,yp) -> s==NORTH && (s,xp+1,yp) `notElem` todo) todo
         sides' = start `delete` todo
 
-compressSides (SOUTH,x,y) todo@(_:_)
+compressSides (SOUTH,x,y) todo
                              | (SOUTH,x+1,y) `elem` todo = compressSides (SOUTH,x+1,y) ((SOUTH,x+1,y) `delete` todo)
                              | (EAST,x,y) `elem` todo = 1+ compressSides (EAST,x,y) ((EAST,x,y) `delete` todo)
                              | (WEST,x+1,y+1) `elem` todo = 1+ compressSides (WEST,x+1,y+1) ((WEST,x+1,y+1) `delete` todo)
@@ -87,7 +89,7 @@ compressSides (SOUTH,x,y) todo@(_:_)
         start = head $ filter (\(s,xp,yp) -> s==NORTH && (s,xp+1,yp) `notElem` todo) todo
         sides' = start `delete` todo
 
-compressSides (EAST,x,y) todo@(_:_) 
+compressSides (EAST,x,y) todo
                              | (EAST,x,y-1) `elem` todo = compressSides (EAST,x,y-1) ((EAST,x,y-1) `delete` todo)
                              | (NORTH,x,y) `elem` todo = 1+ compressSides (NORTH,x,y) ((NORTH,x,y) `delete` todo)
                              | (SOUTH,x+1,y-1) `elem` todo = 1+ compressSides (SOUTH,x+1,y-1) ((SOUTH,x+1,y-1) `delete` todo)
@@ -96,7 +98,7 @@ compressSides (EAST,x,y) todo@(_:_)
         start = head $ filter (\(s,xp,yp) -> s==NORTH && (s,xp+1,yp) `notElem` todo) todo
         sides' = start `delete` todo
 
-compressSides (WEST,x,y) todo@(_:_)
+compressSides (WEST,x,y) todo
                              | (WEST,x,y+1) `elem` todo = compressSides (WEST,x,y+1) ( (WEST,x,y+1) `delete` todo)
                              | (SOUTH,x,y) `elem` todo = 1+ compressSides (SOUTH,x,y) ((SOUTH,x,y) `delete` todo)
                              | (NORTH,x-1,y+1) `elem` todo = 1+ compressSides (NORTH,x-1,y+1) ((NORTH,x-1,y+1) `delete` todo)
@@ -104,8 +106,6 @@ compressSides (WEST,x,y) todo@(_:_)
     where
         start = head $ filter (\(s,xp,yp) -> s==NORTH && (s,xp+1,yp) `notElem` todo) todo
         sides' = start `delete` todo
-
-compressSides _ [] = 0
 
 compress :: [(Dir, Int,Int)] -> Int
 compress side = 1+ compressSides start sides'
