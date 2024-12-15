@@ -74,9 +74,6 @@ showArea walls boxes robot mx my x y | x >= mx && y >= my = []
                                      | (x,y) `member` boxes = '[':']' : showArea walls boxes robot mx my (x+2) y
                                      | otherwise  = '.' : showArea walls boxes robot mx my (x+1) y
 
-s :: Integer
-s = 10
-
 part1 :: Set Point -> Set Point -> Point -> [Char] -> Integer
 part1 walls boxes robot movement = sum $ map gps (toList $ fst $ simulateAll walls boxes robot movement)
 
@@ -173,6 +170,9 @@ part2 walls boxes robot movement = sum $ map gps (toList boxes2)
     where
         (walls',boxes',robot') = double walls boxes robot
         (boxes2, _) = simulateAllWide walls' boxes' robot' movement
+
+s :: Integer
+s = 50
 
 main :: IO ()
 main = do
