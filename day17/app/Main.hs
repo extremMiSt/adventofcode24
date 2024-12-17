@@ -1,8 +1,15 @@
 module Main where
 import Data.List.Split (splitOn)
 import Data.Bits (xor)
-import Debug.Trace (trace)
 import Numeric (readBin, showBin)
+import Data.List (isSuffixOf)
+import Debug.Trace (trace)
+
+trace' :: Show a => a -> a
+trace' a = trace (show a) a
+
+traceS :: Show a => String -> a -> a
+traceS str a = trace (str ++ show a) a
 
 data State = Running Integer Integer Integer Int (Maybe Integer) | Stopped Integer Integer Integer Int
     deriving (Show,Eq,Ord)
@@ -44,20 +51,39 @@ loop code a b c p | Stopped {}  <- next = []
     where
         next = step code a b c p
 
-fromBinString :: (Eq a, Num a) => String -> a
+part1 :: [Integer] -> Integer -> Integer -> Integer -> [Integer]
+part1 code a b c= loop code a b c 0
+
+fromBinString :: String -> Integer
+fromBinString "" = 0
 fromBinString str = fst $ head $ readBin str
 
-tbs :: Integral a => a -> String
+tbs :: Integer -> String
 tbs i = off++bin
     where 
         bin = showBin i ""
         off = take (3 - length bin) "000"
 
+candidates :: [Integer] -> [Char] -> [Integer]
+candidates code done  = map fst $ filter (\(_,r) -> r `isSuffixOf` code) c
+    where
+        c = map (\x -> (x,loop code (fromBinString $ done ++ tbs x) 0 0 0)) [0..7]
+
+makeInput :: [Integer] -> String -> [Integer] -> String
+makeInput _ _ [] = error "this should not happen"
+makeInput code done (x:xs) | null candidates' && code == loop code (fromBinString extended) 0 0 0 = extended
+                           | null candidates' = makeInput code done xs
+                           | otherwise = makeInput code (done ++ tbs x) candidates'
+    where 
+        extended = done ++ tbs x
+        candidates' = candidates code extended
+
+part2 :: [Integer] -> Integer
+part2 code = fromBinString $ makeInput code "" (candidates code "")
+
 main :: IO ()
 main = do
     f <- readFile "./input01.txt"
     let (a,b,c,code) = parse $ lines f
-    print $ loop code a b c 0
-    print $ code
-    print $ loop code 
-    return ()
+    print $ part1 code a b c
+    print $ part2 code
