@@ -58,13 +58,13 @@ executable day21
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    -- other-modules:
+    --other-modules:  Main2
 
     -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
+    --other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.17.0.0,split ^>=0.2.3.5,containers ^>=0.6.6
+    build-depends:    base ^>=4.17.0.0,split ^>=0.2.3.5,containers ^>=0.6.6,memoize ^>=1.1.2
 
     -- Directories containing source files.
     hs-source-dirs:   app

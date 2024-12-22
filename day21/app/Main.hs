@@ -1,5 +1,7 @@
 module Main where
 import Data.List (nub, genericLength)
+import Data.Map (fromList, Map, (!))
+import Main2 (solve)
 
 type Point = (Int,Int)
 type Pad = [[String]]
@@ -69,7 +71,7 @@ mapping 'A' '^' = "<A"
 mapping 'A' 'v' = "<vA"
 
 mapping '<' 'A' = ">>^A"
-mapping '<' '>' = error "why?"
+mapping '<' '>' = error "why?" --
 mapping '<' '^' = ">^A"
 mapping '<' 'v' = ">A"
 
@@ -79,7 +81,7 @@ mapping '>' '^' = "<^A"
 mapping '>' 'v' = "<A"
 
 mapping '^' 'A' = ">A"
-mapping '^' '>' = "v>A" -- or >vA
+mapping '^' '>' = "v>A" -- v>A or >vA
 mapping '^' '<' = "v<A"
 mapping '^' 'v' = error "why?"
 
@@ -117,7 +119,104 @@ score str = read (take 3 str) * minimum (map (genericLength . mapper 'A' . mappe
 part1 :: String -> Integer
 part1 f = sum $ map score $ lines f
 
+mapping' :: Map (Char,Char) Integer
+mapping' = fromList [
+    (('A','<'), 4),
+    (('A','>'), 2),
+    (('A','^'), 2),
+    (('A','v'), 3),
+    (('A','A'), 1),
+    (('<','A'), 4),
+    (('<','>'), error "why?"),
+    (('<','^'), 3),
+    (('<','v'), 2),
+    (('<','<'), 1),
+    (('>','A'), 2),
+    (('>','<'), error "why?"),
+    (('>','^'), 3),
+    (('>','v'), 2),
+    (('>','>'), 1),
+    (('^','A'), 2),
+    (('^','>'), 3),
+    (('^','<'), 3),
+    (('^','v'), error "why?"),
+    (('^','^'), 1),
+    (('v','A'), 3),
+    (('v','<'), 2),
+    (('v','>'), 2),
+    (('v','^'), error "why?"),
+    (('v','v'), 1)]
+
+addLayer :: Map (Char,Char) Integer -> Map (Char,Char) Integer
+addLayer old = fromList [
+        (('A','<'), next 'A' '<'),
+        (('A','>'), next 'A' '>'),
+        (('A','^'), next 'A' '^'),
+        (('A','v'), next 'A' 'v'),
+        (('A','A'), next 'A' 'A'),
+        (('<','A'), next '<' 'A'),
+        (('<','>'), error "why?"),
+        (('<','^'), next '<' '^'),
+        (('<','v'), next '<' 'v'),
+        (('<','<'), next '<' '<'),
+        (('>','A'), next '>' 'A'),
+        (('>','<'), error "why?"),
+        (('>','^'), next '>' '^'),
+        (('>','v'), next '>' 'v'),
+        (('>','>'), next '>' '>'),
+        (('^','A'), next '^' 'A'),
+        (('^','>'), next '^' '>'),
+        (('^','<'), next '^' '<'),
+        (('^','v'), error "why?"),
+        (('^','^'), next '^' '^'),
+        (('v','A'), next 'v' 'A'),
+        (('v','<'), next 'v' '<'),
+        (('v','>'), next 'v' '>'),
+        (('v','^'), error "why?"),
+        (('v','v'), next 'v' 'v')]
+    where 
+        next prev cur = sum $ map (old!) (pair $ 'A':mapping prev cur)
+        pair [] = []
+        pair [_] = []
+        pair (x:xx:xs) = (x,xx) : pair (xx:xs) 
+
+layer2 :: Map (Char, Char) Integer
+layer2 = (rep (z-1) addLayer) mapping'
+
+rep :: Int -> (a->a) -> (a->a)
+rep n f | n == 0 = id
+        | otherwise = f . rep (n-1) f
+
+layer25 :: Map (Char, Char) Integer
+layer25 = addLayer $ addLayer $ addLayer $ addLayer $ addLayer $ 
+          addLayer $ addLayer $ addLayer $ addLayer $ addLayer $ 
+          addLayer $ addLayer $ addLayer $ addLayer $ addLayer $ 
+          addLayer $ addLayer $ addLayer $ addLayer $ addLayer $ 
+          addLayer $ addLayer $ addLayer $ addLayer mapping'
+
+mapper' :: Map (Char,Char) Integer -> Char -> String -> Integer
+mapper' _ _ [] = 0
+mapper' maps c (x:xs) =  maps!(c,x) + mapper' maps x xs
+
+score' :: String -> Integer
+score' str = read (take 3 str) * minimum (map (mapper' layer2 'A') (paths [""] 'A' str))
+
+part1' :: String -> Integer
+part1' f = sum $ map score' $ lines f
+
+score'' :: String -> Integer
+score'' str = read (take 3 str) * minimum (map (genericLength . rep z (mapper 'A')) (paths [""] 'A' str))
+
+part1'' :: String -> Integer
+part1'' f = sum $ map score'' $ lines f
+
+z :: Int
+z = 5
+
 main :: IO ()
 main = do
     f <- readFile "./input01.txt"
-    print $ part1 f
+    --print $ part1 f
+    --print $ part1' f
+    print $ part1'' f
+    print $ Main2.solve z (lines f)
