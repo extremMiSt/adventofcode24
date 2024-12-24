@@ -126,5 +126,5 @@ main = do
     mapM_ (print . show) $ incorrect circuit candidates
 
     -- it follows that tjp is switched with nrn, z23 with bks, z16 with tdv, and z09 with hnd
-    -- see the xjournal file
+    -- see the xournal file
     print $ display $ sort ["tjp", "nrn", "z23", "bks", "z16", "tdv", "z09", "hnd"]
