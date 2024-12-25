@@ -58,7 +58,7 @@ part1' edges nodes = length $ nub $ extend edges nodeL $ extend edges nodeL cand
 part2 :: Set Edge -> Set Node -> String
 part2 edges nodes = join $ toList $ dewit candidates
     where 
-        candidates = map singleton $ toList  {-$  S.filter ("t" `isPrefixOf`)-} nodes
+        candidates = map singleton $ toList  $  S.filter ("t" `isPrefixOf`) nodes
         nodeL = toList nodes
         dewit cur | length cur == 1 = head cur
                   | otherwise = dewit $ nub $ extend edges nodeL cur
@@ -69,7 +69,7 @@ part2 edges nodes = join $ toList $ dewit candidates
 
 main :: IO ()
 main = do
-    (edges, nodes) <- parse empty empty . lines <$> readFile "./example01.txt"
+    (edges, nodes) <- parse empty empty . lines <$> readFile "./input01.txt"
     print $ part1 edges nodes
     print $ part2 edges nodes
 
