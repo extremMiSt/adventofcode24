@@ -1,13 +1,14 @@
 module Main where
 import Data.List (nub, genericLength)
 import Data.Map (fromList, Map, (!))
-import Main2 (solve)
 
 type Point = (Int,Int)
 type Pad = [[String]]
 type Robot = (Point, Pad)
 
 {-
+-- this is code I did while thinking about part2, to better understand what the fuq was even going on
+
 numpad :: Pad
 numpad = [["7","8","9"],["4","5","6"],["1","2","3"],["X","0","A"]]
 
@@ -71,7 +72,7 @@ mapping 'A' '^' = "<A"
 mapping 'A' 'v' = "<vA"
 
 mapping '<' 'A' = ">>^A"
-mapping '<' '>' = error "why?" --
+mapping '<' '>' = error "why?"
 mapping '<' '^' = ">^A"
 mapping '<' 'v' = ">A"
 
@@ -81,11 +82,11 @@ mapping '>' '^' = "<^A"
 mapping '>' 'v' = "<A"
 
 mapping '^' 'A' = ">A"
-mapping '^' '>' = "v>A" -- v>A or >vA
+mapping '^' '>' = "v>A"
 mapping '^' '<' = "v<A"
 mapping '^' 'v' = error "why?"
 
-mapping 'v' 'A' = ">^A"
+mapping 'v' 'A' = "^>A" --">^A" --this number cost me a few hours ...
 mapping 'v' '<' = "<A"
 mapping 'v' '>' = ">A"
 mapping 'v' '^' = error "why?"
@@ -180,43 +181,28 @@ addLayer old = fromList [
         pair [_] = []
         pair (x:xx:xs) = (x,xx) : pair (xx:xs) 
 
-layer2 :: Map (Char, Char) Integer
-layer2 = (rep (z-1) addLayer) mapping'
+layerZ :: Map (Char, Char) Integer
+layerZ = rep (z-1) addLayer mapping'
 
 rep :: Int -> (a->a) -> (a->a)
 rep n f | n == 0 = id
         | otherwise = f . rep (n-1) f
 
-layer25 :: Map (Char, Char) Integer
-layer25 = addLayer $ addLayer $ addLayer $ addLayer $ addLayer $ 
-          addLayer $ addLayer $ addLayer $ addLayer $ addLayer $ 
-          addLayer $ addLayer $ addLayer $ addLayer $ addLayer $ 
-          addLayer $ addLayer $ addLayer $ addLayer $ addLayer $ 
-          addLayer $ addLayer $ addLayer $ addLayer mapping'
+mapperMap :: Map (Char,Char) Integer -> Char -> String -> Integer
+mapperMap _ _ [] = 0
+mapperMap maps c (x:xs) =  maps!(c,x) + mapperMap maps x xs
 
-mapper' :: Map (Char,Char) Integer -> Char -> String -> Integer
-mapper' _ _ [] = 0
-mapper' maps c (x:xs) =  maps!(c,x) + mapper' maps x xs
+scoreZ :: String -> Integer
+scoreZ str = read (take 3 str) * minimum (map (mapperMap layerZ 'A') (paths [""] 'A' str))
 
-score' :: String -> Integer
-score' str = read (take 3 str) * minimum (map (mapper' layer2 'A') (paths [""] 'A' str))
-
-part1' :: String -> Integer
-part1' f = sum $ map score' $ lines f
-
-score'' :: String -> Integer
-score'' str = read (take 3 str) * minimum (map (genericLength . rep z (mapper 'A')) (paths [""] 'A' str))
-
-part1'' :: String -> Integer
-part1'' f = sum $ map score'' $ lines f
+part2 :: String -> Integer
+part2 f = sum $ map scoreZ $ lines f
 
 z :: Int
-z = 5
+z = 25
 
 main :: IO ()
 main = do
     f <- readFile "./input01.txt"
-    --print $ part1 f
-    --print $ part1' f
-    print $ part1'' f
-    print $ Main2.solve z (lines f)
+    print $ part1 f
+    print $ part2 f
